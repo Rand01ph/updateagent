@@ -105,10 +105,15 @@ func DownloadFile(dst string, url string) error {
 	defer resp.Body.Close()
 
 	// Write the body to file
-	_, err = io.Copy(out, resp.Body)
+	bodymd5 := md5.New()
+	w := io.MultiWriter(bodymd5, out)
+
+	_, err = io.Copy(w, resp.Body)
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("body md5 is %s\n", hex.EncodeToString(bodymd5.Sum(nil)))
 
 	return nil
 }
