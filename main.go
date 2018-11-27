@@ -44,16 +44,10 @@ func main() {
 
 	// 下载升级包
 	api_package := "api.tar.gz"
-	fn := func() error { return DownloadFile(api_package, package_url) }
+	fn := func() error { return DownloadFile(api_package, package_url, package_md5) }
 	err := retry(3, 1*time.Second, fn)
 	if err != nil {
 		panic(err)
-	}
-
-	// 校验md5
-	md5err := CheckMD5(api_package, package_md5)
-	if md5err != nil {
-		panic(md5err)
 	}
 
 	// 替换流程
@@ -88,7 +82,7 @@ type stop struct {
 
 // DownloadFile will download a url to a local file. It's efficient because it will
 // write as it downloads and not load the whole file into memory.
-func DownloadFile(dst string, url string) error {
+func DownloadFile(dst string, url string, filemd5 string) error {
 
 	// Create the file
 	out, err := os.Create(dst)
@@ -113,7 +107,9 @@ func DownloadFile(dst string, url string) error {
 		return err
 	}
 
-	fmt.Printf("body md5 is %s\n", hex.EncodeToString(bodymd5.Sum(nil)))
+	if filemd5 != hex.EncodeToString(bodymd5.Sum(nil)) {
+		os.Exit(1)
+	}
 
 	return nil
 }
